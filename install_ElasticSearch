@@ -1,0 +1,56 @@
+Google Cloud Platform: try install ElasticSearch/kibana on Google Kubernetes Engine
+Steps:
+1.$ gcloud container clusters get-credentials autopilot-cluster-1 --project=dev-poet-353407 --region=asia-east1
+2.$ kubectl create -f https://download.elastic.co/downloads/eck/2.2.0/crds.yaml
+3.$ kubectl apply -f https://download.elastic.co/downloads/eck/2.2.0/operator.yaml
+4.$ gcloud init
+5.$ helm repo add elastic https://helm.elastic.co
+helm repo update
+6.$cat <<EOF | kubectl apply -f -
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: quickstart
+spec:
+  nodeSets:
+    - name: default
+      count: 1
+      config:
+        node.roles: ["master", "data", "ingest", "ml", "transform"]
+        xpack.ml.enabled: true
+        node.store.allow_mmap: false
+        path.repo: ["/tmp"]
+  version: 8.1.0
+EOF
+
+$ kubectl get Elasticsearch quickstart
+W0617 07:43:49.115077     975 gcp.go:120] WARNING: the gcp auth plugin is deprecated in v1.22+, unavailable in v1.25+; use gcloud instead.
+To learn more, consult https://cloud.google.com/blog/products/containers-kubernetes/kubectl-auth-changes-in-gke
+NAME         HEALTH   NODES   VERSION   PHASE   AGE
+quickstart   green    1       8.1.0     Ready   11m
+
+7.$ cat <<EOF | kubectl apply -f -
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: quickstart
+spec:
+  version: 8.1.0
+  count: 1
+  elasticsearchRef:
+    name: "quickstart"  
+EOF	
+8.$ kubectl get services
+W0617 07:50:12.830403     994 gcp.go:120] WARNING: the gcp auth plugin is deprecated in v1.22+, unavailable in v1.25+; use gcloud instead.
+To learn more, consult https://cloud.google.com/blog/products/containers-kubernetes/kubectl-auth-changes-in-gke
+NAME                          TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)    AGE
+kubernetes                    ClusterIP   10.54.0.1     <none>        443/TCP    2d
+quickstart-es-default         ClusterIP   None          <none>        9200/TCP   18m
+quickstart-es-http            ClusterIP   10.54.1.4     <none>        9200/TCP   18m
+quickstart-es-internal-http   ClusterIP   10.54.3.110   <none>        9200/TCP   18m
+quickstart-es-transport       ClusterIP   None          <none>        9300/TCP   18m
+quickstart-kb-http            ClusterIP   10.54.0.2     <none>        5601/TCP   18m
+
+9.$ kubectl port-forward svc/quickstart-es-http 9200:9200
+
+10.$ curl https://localhost:9200 -k -u elastic:N7w3tr762Q8WTukuJY653K6p
