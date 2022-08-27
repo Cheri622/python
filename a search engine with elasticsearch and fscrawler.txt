@@ -1,0 +1,50 @@
+a search engine with elasticsearch and fscrawler
+
+setup steps:
+1.JAVA_HOME=C:\Program Files\Java\jdk-17.0.4.1
+2.cd C:\Search_Engine\fscrawler-es7-2.7
+bin\fscrawler test_job
+ [f.console] job [test_job] does not exist
+19:55:30,528 INFO  [f.console] Do you want to create it (Y/N)?
+y
+19:58:21,019 INFO  [f.console] Settings have been created in [C:\Users\cheri\.fscrawler\test_job\_settings.yaml]. 
+Please review and edit before relaunch
+
+3.Create a directory named /tmp/es or c:\tmp\es, add some files you want to index in it 
+(for ex. text book files DOWNLOAD from www.gutenberg.org)
+
+4.start elasticsearch 
+error:
+Unrecognized VM option 'UseConcMarkSweepGC'
+Error: Could not create the Java Virtual Machine.
+Final solution：
+open jvm.options under config subfolder：
+-XX:+UseConcMarkSweepGC
+-XX:CMSInitiatingOccupancyFraction=75
+-XX:+UseCMSInitiatingOccupancyOnly
+modify to:
+#-XX:+UseConcMarkSweepGC
+#-XX:CMSInitiatingOccupancyFraction=75
+#-XX:+UseCMSInitiatingOccupancyOnly
+
+save and restart elasticsearch
+————————————————
+5.C:\Search_Engine\fscrawler-es7-2.7>bin\fscrawler
+if error occurred: Elasticsearch exception [type=master_not_discovered_exception, reason=null]
+just edit elasticsearch.yaml with the following changes:
+node.name: node-1
+network.host: 0.0.0.0
+discovery.seed_hosts: 127.0.0.1
+cluster.initial_master_nodes: node-1
+
+save the file and stop and restart elasticsearch
+
+if running successfully:
+ [f.p.e.c.f.FsCrawlerImpl] Starting FS crawler
+21:10:24,005 INFO  [f.p.e.c.f.FsCrawlerImpl] FS crawler started in watch mode. It will run unless you stop it with CTRL+C.
+21:10:24,649 INFO  [f.p.e.c.f.c.v.ElasticsearchClientV7] Elasticsearch Client for version 7.x connected to a node running version 7.3.2
+21:10:24,903 INFO  [f.p.e.c.f.c.v.ElasticsearchClientV7] Elasticsearch Client for version 7.x connected to a node running version 7.3.2
+21:10:25,727 INFO  [f.p.e.c.f.FsParserAbstract] FS crawler started for [test_job] for [\tmp\es] every [15m]
+21:10:26,027 WARN  [o.a.t.p.PDFParser] J2KImageReader not loaded. JPEG2000 files will not be processed.
+See https://pdfbox.apache.org/2.0/dependencies.html#jai-image-io
+for optional dependencies.
